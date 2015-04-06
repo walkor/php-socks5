@@ -115,7 +115,6 @@ function parse_socket5_header($buffer)
             break;
         case ADDRTYPE_HOST:
             $addrlen = ord($buffer[4]);
-echo $addrlen."<<<<<<<<<\n";
             if(strlen($buffer) < $addrlen + 5)
             {
                 echo $buffer."\n";
