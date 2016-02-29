@@ -1,8 +1,11 @@
 # socks5-proxy
-基于workerman开发的 socks5 代理
+Socks5 proxy written in PHP based on workerman.
 
-## 启动
-php start.php start
+## Start
+php start.php start -d
 
-## 停止
+## Stop
 php start.php stop
+
+## Status
+php start.php status
