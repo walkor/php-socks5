@@ -9,3 +9,6 @@ php start.php stop
 
 ## Status
 php start.php status
+
+## Ohter links 
+https://github.com/walkor/shadowsocks-php
