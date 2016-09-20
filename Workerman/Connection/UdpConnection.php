@@ -1,105 +1,114 @@
 <?php
+/**
+ * This file is part of workerman.
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the MIT-LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @author    walkor<walkor@workerman.net>
+ * @copyright walkor<walkor@workerman.net>
+ * @link      http://www.workerman.net/
+ * @license   http://www.opensource.org/licenses/mit-license.php MIT License
+ */
 namespace Workerman\Connection;
 
-use Workerman\Events\Libevent;
-use Workerman\Events\Select;
-use Workerman\Events\EventInterface;
-use Workerman\Worker;
-use \Exception;
-
 /**
- * udp连接类（udp实际上是无连接的，这里是为了保持与TCP接口一致） 
- * @author walkor<walkor@workerman.net>
+ * UdpConnection.
  */
 class UdpConnection extends ConnectionInterface
 {
     /**
-     * 应用层协议
-     * 值类似于 Workerman\\Protocols\\Http
-     * @var string
+     * Application layer protocol.
+     * The format is like this Workerman\\Protocols\\Http.
+     *
+     * @var \Workerman\Protocols\ProtocolInterface
      */
-    public $protocol = '';
-    
+    public $protocol = null;
+
     /**
-     * udp socket 资源
+     * Udp socket.
+     *
      * @var resource
      */
     protected $_socket = null;
-    
+
     /**
-     * 对端 ip
-     * @var string
-     */
-    protected $_remoteIp = '';
-    
-    /**
-     * 对端 端口
-     * @var int
-     */
-    protected $_remotePort = 0;
-    
-    /**
-     * 对端 地址
-     * 值类似于 192.168.10.100:3698
+     * Remote address.
+     *
      * @var string
      */
     protected $_remoteAddress = '';
 
     /**
-     * 构造函数
+     * Construct.
+     *
      * @param resource $socket
-     * @param string $remote_address
+     * @param string   $remote_address
      */
     public function __construct($socket, $remote_address)
     {
-        $this->_socket = $socket;
+        $this->_socket        = $socket;
         $this->_remoteAddress = $remote_address;
     }
-    
+
     /**
-     * 发送数据给对端
+     * Sends data on the connection.
+     *
      * @param string $send_buffer
+     * @param bool   $raw
      * @return void|boolean
      */
-    public function send($send_buffer)
+    public function send($send_buffer, $raw = false)
     {
+        if (false === $raw && $this->protocol) {
+            $parser      = $this->protocol;
+            $send_buffer = $parser::encode($send_buffer, $this);
+            if ($send_buffer === '') {
+                return null;
+            }
+        }
         return strlen($send_buffer) === stream_socket_sendto($this->_socket, $send_buffer, 0, $this->_remoteAddress);
     }
-    
+
     /**
-     * 获得对端 ip
+     * Get remote IP.
+     *
      * @return string
      */
     public function getRemoteIp()
     {
-        if(!$this->_remoteIp)
-        {
-            list($this->_remoteIp, $this->_remotePort) = explode(':', $this->_remoteAddress, 2);
+        $pos = strrpos($this->_remoteAddress, ':');
+        if ($pos) {
+            return trim(substr($this->_remoteAddress, 0, $pos), '[]');
         }
-        return $this->_remoteIp;
-    }
-    
-    /**
-     * 获得对端端口
-     */
-    public function getRemotePort()
-    {
-        if(!$this->_remotePort)
-        {
-            list($this->_remoteIp, $this->_remotePort) = explode(':', $this->_remoteAddress, 2);
-        }
-        return $this->_remotePort;
+        return '';
     }
 
     /**
-     * 关闭连接（此处为了保持与TCP接口一致，提供了close方法）
-     * @void
+     * Get remote port.
+     *
+     * @return int
      */
-    public function close($data = null)
+    public function getRemotePort()
     {
-        if($data !== null)
-        {
-            $this->send($data);
+        if ($this->_remoteAddress) {
+            return (int)substr(strrchr($this->_remoteAddress, ':'), 1);
+        }
+        return 0;
+    }
+
+    /**
+     * Close connection.
+     *
+     * @param mixed $data
+     * @param bool  $raw
+     * @return bool
+     */
+    public function close($data = null, $raw = false)
+    {
+        if ($data !== null) {
+            $this->send($data, $raw);
         }
         return true;
     }

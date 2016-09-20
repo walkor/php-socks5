@@ -16,9 +16,9 @@ namespace Workerman\Protocols;
 use Workerman\Connection\TcpConnection;
 
 /**
- * Text Protocol.
+ * Frame Protocol.
  */
-class Text
+class Frame
 {
     /**
      * Check the integrity of the package.
@@ -29,31 +29,11 @@ class Text
      */
     public static function input($buffer, TcpConnection $connection)
     {
-        // Judge whether the package length exceeds the limit.
-        if (strlen($buffer) >= TcpConnection::$maxPackageSize) {
-            $connection->close();
+        if (strlen($buffer) < 4) {
             return 0;
         }
-        //  Find the position of  "\n".
-        $pos = strpos($buffer, "\n");
-        // No "\n", packet length is unknown, continue to wait for the data so return 0.
-        if ($pos === false) {
-            return 0;
-        }
-        // Return the current package length.
-        return $pos + 1;
-    }
-
-    /**
-     * Encode.
-     *
-     * @param string $buffer
-     * @return string
-     */
-    public static function encode($buffer)
-    {
-        // Add "\n"
-        return $buffer . "\n";
+        $unpack_data = unpack('Ntotal_length', $buffer);
+        return $unpack_data['total_length'];
     }
 
     /**
@@ -64,7 +44,18 @@ class Text
      */
     public static function decode($buffer)
     {
-        // Remove "\n"
-        return trim($buffer);
+        return substr($buffer, 4);
+    }
+
+    /**
+     * Encode.
+     *
+     * @param string $buffer
+     * @return string
+     */
+    public static function encode($buffer)
+    {
+        $total_length = 4 + strlen($buffer);
+        return pack('N', $total_length) . $buffer;
     }
 }

@@ -52,46 +52,16 @@ $worker->onMessage = function($connection, $buffer)
                 $connection->close();
                 return;
             }
-            //$connection->send("\x05\x00\x00\x01\x00\x00\x00\x00\x10\x10");
-            //$connection->stage = STAGE_DNS;
             $connection->stage = STAGE_CONNECTING;
             $remote_connection = new AsyncTcpConnection('tcp://'.$header_data[1].':'.$header_data[2]);
             $remote_connection->onConnect = function($remote_connection)use($connection)
             {
                 $connection->state = STAGE_STREAM;
                 $connection->send("\x05\x00\x00\x01\x00\x00\x00\x00\x10\x10");
+                $connection->pipe($remote_connection);
+                $remote_connection->pipe($connection);
             };
-            $remote_connection->onMessage = function($remote_connection, $buffer)use($connection)
-            {
-                $connection->send($buffer);
-            };
-            $remote_connection->onClose = function($remote_connection)use($connection)
-            {
-                $connection->close();
-            };
-            $remote_connection->onError = function($remote_connection, $code, $type)use($connection)
-            {
-                if($connection->stage == STAGE_CONNECTING)
-                {
-                    $connection->send("\x05\x03\x00\x01\x00\x00\x00\x00\x10\x10");
-                }
-                $connection->close();
-            };
-            $connection->onMessage = function($connection, $data)use($remote_connection)
-            {
-                $remote_connection->send($data);
-            };
-            $connection->onClose = function($connection)use($remote_connection)
-            {
-                $remote_connection->close();
-            };
-            $connection->onError = function($connection)use($remote_connection)
-            {
-                echo "connection err\n";
-                $connection->close();
-                $remote_connection->close();
-            };
-            
+            $remote_connection->connect();
     }
 };
 
