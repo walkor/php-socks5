@@ -19,5 +19,5 @@ Edit file ```config.php```
 ```php start.php status```
 
 ## Other links
-https://github.com/walkor/shadowsocks-php 
+https://github.com/walkor/shadowsocks-php  
 https://github.com/walkor/php-http-proxy
