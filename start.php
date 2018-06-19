@@ -6,7 +6,6 @@ use \Workerman\Connection\AsyncTcpConnection;
 
 // 自动加载类
 require_once __DIR__ . '/vendor/autoload.php';
-
 require_once __DIR__ . '/config.php';
 
 define('STAGE_INIT', 0);
@@ -37,6 +36,7 @@ $worker->onConnect = function($connection)
 };
 $worker->onMessage = function($connection, $buffer)
 {
+    global $AUTH_ENABLED, $USERNAME, $PASSWORD;
     switch($connection->stage)
     {
         case STAGE_INIT:
