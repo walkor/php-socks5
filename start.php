@@ -82,12 +82,12 @@ $worker->onMessage = function($connection, $buffer)
             $pass = substr($buffer, 3 + $userlen, $passlen);
             if ($user == $USERNAME && $pass == $PASSWORD)
             {
-                $connection->send("\x05\x00");
+                $connection->send("\x01\x00");
                 $connection->stage = STAGE_ADDR;
                 return;
             }
             echo "auth failed\n";
-            $connection->send("\x05\x01");
+            $connection->send("\x01\x01");
             $connection->stage = STAGE_DESTROYED;
             $connection->close();
             return;
